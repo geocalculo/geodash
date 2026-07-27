@@ -48,15 +48,28 @@
     if (!response.ok) throw new Error(`API respondió ${response.status}`);
     return response.json();
   }
-  function source(method, path, ...args) {
-    return GEODASH_CONFIG.mode === "mock" ? Promise.resolve(mock[method](...args)) : request(path);
+  async function getSummary() {
+    if (GEODASH_CONFIG.mode === "mock") return mock.getSummary();
+
+    const data = await request("/api/dashboard/resumen");
+    if (!data.ok) throw new Error("API respondió con un resumen no válido");
+    const summary = {
+      queriesToday: data.consultas_hoy,
+      sessionsToday: data.sesiones_hoy,
+      openGeoQueries: data.geoquery_abiertos,
+      crossAccess: data.cross_access
+    };
+    if (Object.values(summary).some(value => !Number.isFinite(value))) {
+      throw new Error("API respondió con valores de resumen no válidos");
+    }
+    return summary;
   }
   window.GeoDashAPI = Object.freeze({
-    getSummary: () => source("getSummary", "/summary"),
-    getDailyActivity: (days = 30) => source("getDailyActivity", `/activity?days=${days}`, days),
-    getSites: () => source("getSites", "/sites"),
-    getOrigins: () => source("getOrigins", "/origins"),
-    getCountries: () => source("getCountries", "/countries"),
-    getRecentEvents: () => source("getRecentEvents", "/events/recent")
+    getSummary,
+    getDailyActivity: (days = 30) => Promise.resolve(mock.getDailyActivity(days)),
+    getSites: () => Promise.resolve(mock.getSites()),
+    getOrigins: () => Promise.resolve(mock.getOrigins()),
+    getCountries: () => Promise.resolve(mock.getCountries()),
+    getRecentEvents: () => Promise.resolve(mock.getRecentEvents())
   });
 }());
