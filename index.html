@@ -6,9 +6,7 @@
   <meta name="description" content="GeoDash: analítica operacional del ecosistema GeoCálculo">
   <title>GeoDash · Analítica operacional</title>
   <link rel="icon" href="assets/favicon.svg" type="image/svg+xml">
-  <link rel="preconnect" href="https://unpkg.com">
   <link rel="preconnect" href="https://cdn.jsdelivr.net">
-  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" integrity="sha256-p4NxAoJBhIINfQ3ynhFwjsuzHOCuCq7AolwpTsffcwB4=" crossorigin="">
   <link rel="stylesheet" href="css/geodash.css">
 </head>
 <body>
@@ -39,9 +37,9 @@
       <article class="panel"><div class="panel__header"><div><p class="eyebrow">Canales</p><h2>Origen de acceso</h2></div></div><div class="chart-wrap"><canvas id="origins-chart" role="img" aria-label="Origen de acceso"></canvas></div></article>
     </section>
 
-    <section class="panel" aria-labelledby="map-title">
-      <div class="panel__header"><div><p class="eyebrow">Cobertura geográfica</p><h2 id="map-title">Distribución territorial de consultas</h2></div><span class="panel__hint">Chile · últimos eventos</span></div>
-      <div id="map" aria-label="Mapa de consultas en Chile"></div>
+    <section class="panel" aria-labelledby="countries-title">
+      <div class="panel__header"><div><p class="eyebrow">Cobertura geográfica</p><h2 id="countries-title">Actividad por país</h2><p class="panel__subtitle">Origen geográfico de la actividad registrada</p></div></div>
+      <ol id="countries-ranking" class="countries" aria-label="Ranking de actividad por país"></ol>
     </section>
 
     <section class="panel" aria-labelledby="events-title">
@@ -53,7 +51,6 @@
 
   <div id="error-banner" class="error-banner" role="alert" hidden>No fue posible cargar los datos.</div>
   <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.7/dist/chart.umd.min.js"></script>
-  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo=" crossorigin=""></script>
-  <script src="js/config.js"></script><script src="js/api.js"></script><script src="js/charts.js"></script><script src="js/map.js"></script><script src="js/dashboard.js"></script>
+  <script src="js/config.js"></script><script src="js/api.js"></script><script src="js/charts.js"></script><script src="js/dashboard.js"></script>
 </body>
 </html>
