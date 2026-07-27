@@ -19,6 +19,15 @@
     ["2026-07-27T13:11:00Z", "GeoNOXA", "geoquery_open", "direct", -53.1638, -70.9171],
     ["2026-07-27T12:49:00Z", "GeoEVA", "index_load", "share_link", -38.7359, -72.5904]
   ].map(([timestamp, site, event, origin, latitude, longitude]) => ({ timestamp, site, event, origin, latitude, longitude }));
+  const countries = [
+    { country: "Chile", code: "CL", total: 7842, percentage: 82.4 },
+    { country: "Argentina", code: "AR", total: 514, percentage: 5.4 },
+    { country: "Perú", code: "PE", total: 381, percentage: 4.0 },
+    { country: "México", code: "MX", total: 297, percentage: 3.1 },
+    { country: "Brasil", code: "BR", total: 214, percentage: 2.2 },
+    { country: "Estados Unidos", code: "US", total: 143, percentage: 1.5 },
+    { country: "Otros", code: "OT", total: 132, percentage: 1.4 }
+  ];
 
   const mock = {
     getSummary: () => ({ queriesToday: 8642, sessionsToday: 2841, openGeoQueries: 374, crossAccess: 918, changes: { queriesToday: 12.4, sessionsToday: 8.7, openGeoQueries: 5.1, crossAccess: -2.3 } }),
@@ -28,7 +37,7 @@
     },
     getSites: () => sites,
     getOrigins: () => [{ name: "direct", value: 6031 }, { name: "cross_access", value: 2264 }, { name: "share_link", value: 383 }],
-    getMapPoints: () => events,
+    getCountries: () => countries,
     getRecentEvents: () => events
   };
 
@@ -47,7 +56,7 @@
     getDailyActivity: (days = 30) => source("getDailyActivity", `/activity?days=${days}`, days),
     getSites: () => source("getSites", "/sites"),
     getOrigins: () => source("getOrigins", "/origins"),
-    getMapPoints: () => source("getMapPoints", "/map-points"),
+    getCountries: () => source("getCountries", "/countries"),
     getRecentEvents: () => source("getRecentEvents", "/events/recent")
   });
 }());

@@ -5,7 +5,7 @@ Dashboard web estático para visualizar la actividad operacional del ecosistema 
 ## Características
 
 - KPIs diarios, actividad de 7/30 días, distribución por sitio y origen.
-- Mapa Leaflet con eventos distribuidos en Chile y cartografía OpenStreetMap.
+- Ranking agregado de actividad por país, ordenado de mayor a menor.
 - Tabla de eventos recientes y diseño responsive para escritorio, tablet y móvil.
 - Capa de acceso a datos intercambiable, sin dependencias de npm ni proceso de build.
 
@@ -18,11 +18,10 @@ js/config.js            Configuración pública de ejecución
 js/api.js               Capa de abstracción mock/API
 js/dashboard.js         Orquestación y renderizado de la interfaz
 js/charts.js            Gráficos Chart.js
-js/map.js               Mapa y marcadores Leaflet
 assets/favicon.svg      Identidad visual mínima
 ```
 
-Chart.js y Leaflet se cargan mediante CDN; el repositorio no requiere instalación ni compilación.
+Chart.js se carga mediante CDN; el repositorio no requiere instalación ni compilación.
 
 ## Ejecución local
 
@@ -32,7 +31,7 @@ Por las políticas de seguridad del navegador, se recomienda servir el directori
 python3 -m http.server 8080
 ```
 
-Luego abrir `http://localhost:8080`. Se requiere conexión a internet para descargar las librerías CDN, la tipografía y las teselas de OpenStreetMap.
+Luego abrir `http://localhost:8080`. Se requiere conexión a internet para descargar Chart.js y la tipografía.
 
 ## Publicación en GitHub Pages
 
@@ -55,7 +54,7 @@ const GEODASH_CONFIG = {
 ```
 
 - **`mock`**: `js/api.js` devuelve datos locales realistas. Es el modo inicial.
-- **`api`**: las mismas funciones (`getSummary`, `getDailyActivity`, `getSites`, `getOrigins`, `getMapPoints` y `getRecentEvents`) usan `fetch` contra `apiBaseUrl`. Las rutas propuestas son contratos preliminares y deberán alinearse con el Worker antes de habilitar este modo.
+- **`api`**: las mismas funciones (`getSummary`, `getDailyActivity`, `getSites`, `getOrigins`, `getCountries` y `getRecentEvents`) usan `fetch` contra `apiBaseUrl`. Las rutas propuestas son contratos preliminares y deberán alinearse con el Worker antes de habilitar este modo.
 
 La interfaz consume exclusivamente `GeoDashAPI`; no conoce el origen de los datos.
 
@@ -79,5 +78,7 @@ Para habilitar datos reales falta:
 2. Aplicar validación, límites de frecuencia, CORS restringido, agregación y anonimización apropiadas en el Worker.
 3. Probar y documentar los esquemas JSON, incluidos eventos futuros como `pdf_download` y `kml_download`.
 4. Establecer en `js/config.js` la URL pública del Worker y cambiar `mode` a `"api"`.
+
+La actividad por país representa el país desde el que el usuario accede al sitio, no una ubicación inferida desde la latitud o longitud de una consulta geográfica. En una integración futura, el Worker deberá capturar ese dato mediante `request.cf.country` o un mecanismo equivalente de Cloudflare y entregar la agregación con el contrato de `getCountries()`; esta V1 solo prepara la estructura MOCK y no implementa todavía la captura.
 
 La URL base del API es pública por naturaleza; cualquier secreto permanece exclusivamente como binding o secret del Worker.
