@@ -1,6 +1,6 @@
 # GeoDash
 
-Dashboard web estático para visualizar la actividad operacional del ecosistema **GeoCálculo** (GeoIPT, GeoEVA, GeoNEMO y GeoNOXA). El resumen superior usa datos reales de D1 a través de un Cloudflare Worker; el resto del dashboard conserva datos simulados.
+Dashboard web estático para visualizar la actividad operacional del ecosistema **GeoCálculo** (GeoIPT, GeoEVA, GeoNEMO y GeoNOXA). El dashboard usa datos reales de D1 a través de un Cloudflare Worker.
 
 ## Características
 
@@ -15,7 +15,7 @@ Dashboard web estático para visualizar la actividad operacional del ecosistema 
 index.html              Entrada compatible con GitHub Pages
 css/geodash.css         Estilos y breakpoints responsive
 js/config.js            Configuración pública de ejecución
-js/api.js               Capa de abstracción mock/API
+js/api.js               Cliente del API del dashboard
 js/dashboard.js         Orquestación y renderizado de la interfaz
 js/charts.js            Gráficos Chart.js
 assets/favicon.svg      Identidad visual mínima
@@ -48,15 +48,13 @@ Todas las rutas del sitio son relativas, por lo que funciona tanto en la raíz c
 
 ```js
 const GEODASH_CONFIG = {
-  mode: "api",
   apiBaseUrl: "https://hidden-mud-ce7a.geocalculo.workers.dev"
 };
 ```
 
-- **`mock`**: `getSummary()` devuelve el resumen local, al igual que el resto de funciones.
-- **`api`**: solo `getSummary()` consulta `/api/dashboard/resumen`. `getDailyActivity()`, `getSites()`, `getOrigins()`, `getCountries()` y `getRecentEvents()` siguen entregando datos MOCK durante esta etapa híbrida.
-
-La interfaz consume exclusivamente `GeoDashAPI`; no conoce el origen de los datos.
+La interfaz consume exclusivamente `GeoDashAPI.fetchDashboard()`, que consulta
+`/dashboard?days=30&limit=20`. Si el API falla, la interfaz muestra el error y no
+reemplaza la respuesta con datos locales.
 
 ## Arquitectura prevista
 
@@ -70,15 +68,14 @@ Cloudflare D1
 
 El navegador **nunca debe conectarse directamente a D1**. No deben incorporarse tokens, Account ID, Database ID ni otras credenciales al repositorio.
 
-## Integración híbrida con D1
+## Integración con D1
 
-La integración actual limita los datos reales a las cuatro cards superiores. Para verificarla:
+Para verificar la integración:
 
 1. Abrir las herramientas de desarrollo del navegador y recargar GeoDash.
-2. Confirmar en **Network** la solicitud `GET /api/dashboard/resumen` y su respuesta JSON.
-3. Comparar `consultas_hoy`, `sesiones_hoy`, `geoquery_abiertos` y `cross_access` con las cuatro cards, respectivamente.
-4. Confirmar que no se realizan solicitudes API para gráficos, países ni eventos, que permanecen en MOCK.
+2. Confirmar en **Network** la solicitud `GET /dashboard?days=30&limit=20` y su respuesta JSON.
+3. Comparar la actividad, los sitios y los orígenes de la respuesta con sus gráficos respectivos.
 
-La actividad por país representa el país desde el que el usuario accede al sitio, no una ubicación inferida desde la latitud o longitud de una consulta geográfica. En una integración futura, el Worker deberá capturar ese dato mediante `request.cf.country` o un mecanismo equivalente de Cloudflare y entregar la agregación con el contrato de `getCountries()`; esta V1 solo prepara la estructura MOCK y no implementa todavía la captura.
+La actividad por país representa el país desde el que el usuario accede al sitio, no una ubicación inferida desde la latitud o longitud de una consulta geográfica.
 
 La URL base del API es pública por naturaleza; cualquier secreto permanece exclusivamente como binding o secret del Worker.

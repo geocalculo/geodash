@@ -30,24 +30,38 @@
   }
   async function init() {
     const status = document.getElementById("data-status");
-    status.className = "status status--live";
-    status.innerHTML = '<span aria-hidden="true"></span>Datos D1 + MOCK';
+    const errorBanner = document.getElementById("error-banner");
     renderSummary(null);
     try {
-      const [activity, sites, origins, countries, events] = await Promise.all([GeoDashAPI.getDailyActivity(30), GeoDashAPI.getSites(), GeoDashAPI.getOrigins(), GeoDashAPI.getCountries(), GeoDashAPI.getRecentEvents()]);
-      GeoDashCharts.activity(activity); GeoDashCharts.sites(sites); GeoDashCharts.origins(origins); renderCountries(countries); renderEvents(events);
+      const data = await GeoDashAPI.fetchDashboard(30, 20);
+      renderSummary(data.summary);
+      GeoDashCharts.activity(data.activity);
+      GeoDashCharts.sites(data.sites);
+      GeoDashCharts.origins(data.origins);
+      renderCountries(data.countries);
+      renderEvents(data.events);
+      status.className = "status status--live";
+      status.innerHTML = '<span aria-hidden="true"></span>Datos D1';
+      errorBanner.hidden = true;
       document.getElementById("updated-at").textContent = `Actualizado ${new Intl.DateTimeFormat("es-CL", { hour: "2-digit", minute: "2-digit" }).format(new Date())}`;
-    } catch (error) { console.error("GeoDash:", error); document.getElementById("error-banner").hidden = false; }
-    try {
-      renderSummary(await GeoDashAPI.getSummary());
     } catch (error) {
-      console.error("GeoDash: no fue posible cargar el resumen D1", error);
+      console.error("GeoDash: no fue posible cargar el dashboard", error);
+      status.className = "status";
+      status.innerHTML = '<span aria-hidden="true"></span>Error de datos';
+      errorBanner.hidden = false;
     }
   }
   document.querySelectorAll("[data-days]").forEach(button => button.addEventListener("click", async () => {
     document.querySelectorAll("[data-days]").forEach(item => { item.classList.toggle("is-active", item === button); item.setAttribute("aria-pressed", item === button); });
     document.getElementById("activity-title").textContent = `Actividad de los últimos ${button.dataset.days} días`;
-    GeoDashCharts.activity(await GeoDashAPI.getDailyActivity(Number(button.dataset.days)));
+    try {
+      const data = await GeoDashAPI.fetchDashboard(Number(button.dataset.days), 20);
+      GeoDashCharts.activity(data.activity);
+      document.getElementById("error-banner").hidden = true;
+    } catch (error) {
+      console.error("GeoDash: no fue posible actualizar la actividad", error);
+      document.getElementById("error-banner").hidden = false;
+    }
   }));
   init();
 }());
