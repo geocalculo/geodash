@@ -3,8 +3,8 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <meta name="description" content="GeoDash: analítica operacional del ecosistema GeoCálculo">
-  <title>GeoDash · Analítica operacional</title>
+  <meta name="description" content="GeoDash: inteligencia operacional del ecosistema GeoCálculo">
+  <title>GeoDash · Inteligencia operacional</title>
   <link rel="icon" href="assets/favicon.svg" type="image/svg+xml">
   <link rel="preconnect" href="https://cdn.jsdelivr.net">
   <link rel="stylesheet" href="css/geodash.css">
@@ -12,43 +12,44 @@
 <body>
   <header class="topbar">
     <div class="shell topbar__content">
-      <div class="brand"><span class="brand__mark" aria-hidden="true">G</span><div><h1>GeoDash</h1><p>Analítica operacional · GeoCálculo</p></div></div>
+      <div class="brand"><span class="brand__mark" aria-hidden="true">G</span><div><h1>GeoDash</h1><p>Inteligencia operacional · GeoCálculo</p></div></div>
       <div id="data-status" class="status"><span aria-hidden="true"></span>Cargando datos…</div>
     </div>
   </header>
 
   <main class="shell">
     <section class="intro" aria-labelledby="overview-title">
-      <div><p class="eyebrow">Resumen operacional</p><h2 id="overview-title">Actividad del ecosistema</h2></div>
-      <p id="updated-at" class="updated">Actualizando…</p>
+      <div><p class="eyebrow">Analytics 2.0</p><h2 id="overview-title">Comportamiento del ecosistema</h2><p class="intro__copy">Tendencias, participación y conversión en una sola vista.</p></div>
+      <div class="intro__actions"><p id="updated-at" class="updated">Actualizando…</p><div class="period-control" role="group" aria-label="Período del dashboard"><button type="button" data-period="today">Hoy</button><button type="button" data-period="week" class="is-active" aria-pressed="true">Semana</button><button type="button" data-period="month">Mes</button></div></div>
     </section>
 
-    <section id="kpi-grid" class="kpi-grid" aria-label="Indicadores principales"></section>
-
-    <section class="panel panel--activity" aria-labelledby="activity-title">
-      <div class="panel__header"><div><p class="eyebrow">Tendencia</p><h2 id="activity-title">Actividad de los últimos 30 días</h2></div>
-        <div class="range-control" role="group" aria-label="Período del gráfico"><button type="button" data-days="7">7 días</button><button type="button" data-days="30" class="is-active" aria-pressed="true">30 días</button></div>
-      </div>
-      <div class="chart-wrap chart-wrap--wide"><canvas id="activity-chart" aria-label="Consultas por día" role="img"></canvas></div>
+    <section class="overview-strip" aria-label="Resumen del período">
+      <div><span>Período actual</span><strong id="summary-total">—</strong><small>consultas</small></div>
+      <div><span>Variación</span><strong id="summary-change" class="trend">—</strong><small id="summary-comparison">vs período anterior</small></div>
+      <div><span>Conversión final</span><strong id="summary-conversion">—</strong><small>Index → KML</small></div>
     </section>
 
-    <section class="split-grid" aria-label="Desglose de consultas">
-      <article class="panel"><div class="panel__header"><div><p class="eyebrow">Ecosistema</p><h2>Consultas por sitio</h2></div></div><div class="chart-wrap"><canvas id="sites-chart" role="img" aria-label="Consultas por sitio"></canvas></div></article>
-      <article class="panel"><div class="panel__header"><div><p class="eyebrow">Canales</p><h2>Origen de acceso</h2></div></div><div class="chart-wrap"><canvas id="origins-chart" role="img" aria-label="Origen de acceso"></canvas></div></article>
+    <section class="panel panel--hero" aria-labelledby="trend-title">
+      <div class="panel__header"><div><p class="panel__index">01 · Tendencia</p><h2 id="trend-title">Evolución de consultas</h2><p class="panel__subtitle" id="trend-subtitle">Consultas por día · semana actual</p></div><div class="metrics"><span><small>Promedio móvil</small><strong id="trend-average">—</strong></span><span><small>Máximo</small><strong id="trend-max">—</strong></span><span><small>Mínimo</small><strong id="trend-min">—</strong></span></div></div>
+      <div class="chart-wrap chart-wrap--wide"><canvas id="trend-chart" aria-label="Evolución de consultas" role="img"></canvas></div>
     </section>
 
-    <section class="panel" aria-labelledby="countries-title">
-      <div class="panel__header"><div><p class="eyebrow">Cobertura geográfica</p><h2 id="countries-title">Actividad por país</h2><p class="panel__subtitle">Origen geográfico de la actividad registrada</p></div></div>
-      <ol id="countries-ranking" class="countries" aria-label="Ranking de actividad por país"></ol>
+    <section class="dashboard-grid">
+      <article class="panel" aria-labelledby="distribution-title"><div class="panel__header"><div><p class="panel__index">02 · Ecosistema</p><h2 id="distribution-title">Distribución por sitio</h2><p class="panel__subtitle">Participación y cambio frente al período anterior</p></div></div><div class="chart-wrap chart-wrap--distribution"><canvas id="distribution-chart" role="img" aria-label="Distribución de consultas por sitio"></canvas></div><div id="site-breakdown" class="site-breakdown"></div></article>
+      <article class="panel" aria-labelledby="heatmap-title"><div class="panel__header"><div><p class="panel__index">03 · Patrones horarios</p><h2 id="heatmap-title">Heatmap de uso</h2><p class="panel__subtitle" id="heatmap-subtitle">Actividad por día y hora</p></div><span class="intensity-key">Menor <i></i><i></i><i></i><i></i> Mayor</span></div><div class="heatmap-scroll"><div id="heatmap" class="heatmap" role="img" aria-label="Mapa de calor de actividad"></div></div></article>
     </section>
 
-    <section class="panel" aria-labelledby="events-title">
-      <div class="panel__header"><div><p class="eyebrow">Registro reciente</p><h2 id="events-title">Últimos eventos</h2></div><span class="live-label"><i></i>Actividad reciente</span></div>
-      <div class="table-scroll"><table><thead><tr><th>Fecha</th><th>Sitio</th><th>Evento</th><th>Origen</th><th>Latitud</th><th>Longitud</th></tr></thead><tbody id="events-body"></tbody></table></div>
+    <section class="panel" aria-labelledby="journey-title">
+      <div class="panel__header"><div><p class="panel__index">04 · Conversión</p><h2 id="journey-title">Journey del usuario</h2><p class="panel__subtitle">Recorrido desde el acceso hasta la descarga territorial</p></div><div class="journey-total"><small>Conversión final</small><strong id="journey-conversion">—</strong></div></div>
+      <div id="journey" class="journey" aria-label="Embudo de conversión"></div>
+    </section>
+
+    <section class="panel" aria-labelledby="site-trend-title">
+      <div class="panel__header"><div><p class="panel__index">05 · Comparativa</p><h2 id="site-trend-title">Tendencia por sitio</h2><p class="panel__subtitle">Crecimiento comparado y promedio móvil</p></div></div>
+      <div class="chart-wrap chart-wrap--wide"><canvas id="site-trend-chart" role="img" aria-label="Tendencia de consultas por sitio"></canvas></div>
     </section>
   </main>
-  <footer class="footer shell"><span>GeoDash · GeoCálculo</span><span>Visualización operacional</span></footer>
-
+  <footer class="footer shell"><span>GeoDash · GeoCálculo</span><span>Actualización automática cada 5 minutos</span></footer>
   <div id="error-banner" class="error-banner" role="alert" hidden>No fue posible cargar los datos.</div>
   <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.7/dist/chart.umd.min.js"></script>
   <script src="js/config.js"></script><script src="js/api.js"></script><script src="js/charts.js"></script><script src="js/dashboard.js"></script>

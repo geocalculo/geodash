@@ -1,81 +1,52 @@
-# GeoDash
+# GeoDash Analytics 2.0
 
-Dashboard web estático para visualizar la actividad operacional del ecosistema **GeoCálculo** (GeoIPT, GeoEVA, GeoNEMO y GeoNOXA). El dashboard usa datos reales de D1 a través de un Cloudflare Worker.
+Dashboard web estático de inteligencia operacional para el ecosistema **GeoCálculo**. La primera fase reemplaza los indicadores de eventos por cinco lecturas: evolución, distribución por sitio, patrones horarios, journey y tendencia comparada.
 
-## Características
+## Funcionalidad
 
-- KPIs diarios, actividad de 7/30 días, distribución por sitio y origen.
-- Ranking agregado de actividad por país, ordenado de mayor a menor.
-- Tabla de eventos recientes y diseño responsive para escritorio, tablet y móvil.
-- Capa de acceso a datos intercambiable, sin dependencias de npm ni proceso de build.
-
-## Estructura
-
-```text
-index.html              Entrada compatible con GitHub Pages
-css/geodash.css         Estilos y breakpoints responsive
-js/config.js            Configuración pública de ejecución
-js/api.js               Cliente del API del dashboard
-js/dashboard.js         Orquestación y renderizado de la interfaz
-js/charts.js            Gráficos Chart.js
-assets/favicon.svg      Identidad visual mínima
-```
-
-Chart.js se carga mediante CDN; el repositorio no requiere instalación ni compilación.
+- Selector global **Hoy / Semana / Mes**, comparación equivalente y porcentaje de variación.
+- Línea suavizada con promedio móvil, máximo y mínimo.
+- Participación 100 % entre GeoIPT, GeoEVA, GeoNOXA y GeoNEMO.
+- Heatmap horario, embudo de conversión y cuatro series con leyenda interactiva.
+- Respuesta en caché durante cinco minutos y actualización automática con la misma frecuencia.
+- Responsive, sin dependencias de npm ni proceso de build.
 
 ## Ejecución local
-
-Por las políticas de seguridad del navegador, se recomienda servir el directorio mediante HTTP:
 
 ```bash
 python3 -m http.server 8080
 ```
 
-Luego abrir `http://localhost:8080`. Se requiere conexión a internet para descargar Chart.js y la tipografía.
+Abrir `http://localhost:8080`. Chart.js y la tipografía se descargan desde CDN.
 
-## Publicación en GitHub Pages
+## Contrato del API
 
-1. Subir el contenido a la rama principal del repositorio.
-2. En **Settings → Pages**, seleccionar **Deploy from a branch**.
-3. Elegir la rama principal y la carpeta `/ (root)`.
-4. Guardar y abrir la URL publicada por GitHub Pages.
+La interfaz llama `GET /analytics?period=week`, donde `period` acepta `today`, `week` o `month`. El navegador nunca se conecta directamente a D1 y `js/config.js` solo contiene la URL pública del Worker.
 
-Todas las rutas del sitio son relativas, por lo que funciona tanto en la raíz como bajo la ruta de un proyecto (`/geodash/`).
-
-## Modos de datos
-
-`js/config.js` expone únicamente configuración pública:
-
-```js
-const GEODASH_CONFIG = {
-  apiBaseUrl: "https://hidden-mud-ce7a.geocalculo.workers.dev"
-};
+```json
+{
+  "summary": { "current": 148, "previous": 125, "change": 18.4 },
+  "trend": [{ "label": "Lun", "bucket": "2026-07-27", "count": 20 }],
+  "siteDistribution": [{ "site": "GeoIPT", "count": 68, "percentage": 45.9, "change": 12.5 }],
+  "heatmap": [{ "label": "Lun", "hours": [0, 1, 0, 2] }],
+  "journey": [{ "stage": "Index", "count": 300 }, { "stage": "Consulta", "count": 148 }],
+  "siteTrend": {
+    "labels": ["Lun", "Mar"],
+    "series": [{ "site": "GeoIPT", "values": [20, 24] }]
+  }
+}
 ```
 
-La interfaz consume exclusivamente `GeoDashAPI.fetchDashboard()`, que consulta
-`/dashboard?days=30&limit=20`. Si el API falla, la interfaz muestra el error y no
-reemplaza la respuesta con datos locales.
+Las consultas propuestas para el Worker están en [`docs/d1-analytics.sql`](docs/d1-analytics.sql). Usan `strftime()`, funciones de ventana y agregaciones en D1 para evitar trasladar cálculos de volumen, participación y conversión al navegador. El Worker debe completar buckets sin actividad con cero y devolver los nombres de campo del contrato anterior.
 
-## Arquitectura prevista
+## Archivos
 
 ```text
-GitHub Pages (GeoDash)
-          ↓ HTTPS / JSON
-Cloudflare Worker API (lectura pública controlada)
-          ↓ binding privado
-Cloudflare D1
+index.html                Estructura accesible de los cinco paneles
+css/geodash.css           Sistema visual y breakpoints responsive
+js/config.js              URL pública del API
+js/api.js                 Cliente y caché de cinco minutos
+js/charts.js              Visualizaciones Chart.js
+js/dashboard.js           Carga, transformación y render de paneles
+docs/d1-analytics.sql     Consultas agregadas para Cloudflare D1
 ```
-
-El navegador **nunca debe conectarse directamente a D1**. No deben incorporarse tokens, Account ID, Database ID ni otras credenciales al repositorio.
-
-## Integración con D1
-
-Para verificar la integración:
-
-1. Abrir las herramientas de desarrollo del navegador y recargar GeoDash.
-2. Confirmar en **Network** la solicitud `GET /dashboard?days=30&limit=20` y su respuesta JSON.
-3. Comparar la actividad, los sitios y los orígenes de la respuesta con sus gráficos respectivos.
-
-La actividad por país representa el país desde el que el usuario accede al sitio, no una ubicación inferida desde la latitud o longitud de una consulta geográfica.
-
-La URL base del API es pública por naturaleza; cualquier secreto permanece exclusivamente como binding o secret del Worker.
