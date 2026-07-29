@@ -2,12 +2,12 @@
   "use strict";
   const number = new Intl.NumberFormat("es-CL");
   const kpis = [
-    ["queriesToday", "Consultas hoy", "Interacciones registradas"], ["sessionsToday", "Sesiones hoy", "Sesiones únicas estimadas"],
-    ["openGeoQueries", "GeoQuery abiertos", "Consultas geográficas iniciadas"], ["crossAccess", "Cross Access", "Accesos entre sitios"]
+    ["consultas_hoy", "Consultas hoy", "Interacciones registradas"], ["sesiones_hoy", "Sesiones hoy", "Sesiones únicas estimadas"],
+    ["geoquery_abiertos", "GeoQuery abiertos", "Consultas geográficas iniciadas"], ["cross_access", "Cross Access", "Accesos entre sitios"]
   ];
   function renderSummary(data) {
     document.getElementById("kpi-grid").innerHTML = kpis.map(([key, title, detail]) => {
-      const value = Number.isFinite(data?.[key]) ? number.format(Math.trunc(data[key])) : "--";
+      const value = data?.kpis?.[key] ?? "--";
       return `<article class="kpi"><span class="kpi__icon" aria-hidden="true"></span><p>${title}</p><strong>${value}</strong><footer><small>${detail}</small></footer></article>`;
     }).join("");
   }
@@ -50,7 +50,7 @@
     renderSummary(null);
     try {
       const data = await GeoDashAPI.fetchDashboard(30, 20);
-      renderSummary(data.summary);
+      renderSummary(data);
       GeoDashCharts.activity(data.activity);
       GeoDashCharts.sites(data.sites);
       GeoDashCharts.origins(data.origins);
