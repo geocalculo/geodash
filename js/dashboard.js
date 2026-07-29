@@ -12,7 +12,23 @@
     }).join("");
   }
   function renderEvents(events) {
-    document.getElementById("events-body").innerHTML = events.map(event => `<tr><td>${new Intl.DateTimeFormat("es-CL", { dateStyle: "short", timeStyle: "short" }).format(new Date(event.timestamp))}</td><td><span class="site site--${event.site.toLowerCase()}">${event.site}</span></td><td><code>${event.event}</code></td><td>${event.origin}</td><td>${event.latitude.toFixed(4)}</td><td>${event.longitude.toFixed(4)}</td></tr>`).join("");
+    const eventList = Array.isArray(events) ? events : [];
+    document.getElementById("events-body").innerHTML = eventList.map(item => {
+      const evento = item && typeof item === "object" ? item : {};
+      const fecha = evento.fecha_hora
+        ? new Date(evento.fecha_hora)
+        : null;
+      const textoFecha = fecha && !Number.isNaN(fecha.getTime())
+        ? fecha.toLocaleString("es-CL")
+        : "—";
+      const sitio = typeof evento.sitio === "string" ? evento.sitio : "—";
+      const tipoEvento = typeof evento.tipo_evento === "string" ? evento.tipo_evento : "—";
+      const origen = typeof evento.origen === "string" ? evento.origen : "—";
+      const latitud = Number.isFinite(evento.latitud) ? evento.latitud.toFixed(4) : "—";
+      const longitud = Number.isFinite(evento.longitud) ? evento.longitud.toFixed(4) : "—";
+
+      return `<tr><td>${textoFecha}</td><td><span class="site site--${sitio.toLowerCase()}">${sitio}</span></td><td><code>${tipoEvento}</code></td><td>${origen}</td><td>${latitud}</td><td>${longitud}</td></tr>`;
+    }).join("");
   }
   function renderCountries(countries) {
     const ranking = [...countries].sort((a, b) => b.total - a.total);
