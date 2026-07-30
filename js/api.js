@@ -4,7 +4,7 @@
   const CACHE_TTL = 5 * 60 * 1000;
 
   async function fetchAnalytics(period = "week", options = {}) {
-    const allowed = ["today", "week", "month"];
+    const allowed = ["day", "week", "month"];
     if (!allowed.includes(period)) throw new Error("Período no válido");
     const base = GEODASH_CONFIG.apiBaseUrl.replace(/\/$/, "");
     if (!base) throw new Error("apiBaseUrl no está configurada");
