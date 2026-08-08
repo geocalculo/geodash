@@ -388,7 +388,8 @@ async function registrarAccesoEstudios(
     const evento = String(datos.evento || "")
       .trim()
       .toLowerCase();
-    const recurso = limpiarTexto(datos.recurso, 200);
+    const recursoBruto = datos.recurso;
+    const recurso = recursoBruto === undefined ? null : limpiarTexto(recursoBruto, 200);
     const sessionId = limpiarTexto(datos.session_id, 100);
 
     if (!EVENTOS_ESTUDIOS_VALIDOS.has(evento)) {
@@ -413,18 +414,18 @@ async function registrarAccesoEstudios(
       );
     }
 
-    if (evento === "visita" && datos.recurso !== null) {
-      return responder(
-        {
-          ok: false,
-          error: "recurso debe ser null para visita"
-        },
-        400,
-        corsHeaders
-      );
-    }
-
-    if (evento !== "visita" && !recurso) {
+    if (evento === "visita") {
+      if (recursoBruto !== undefined && recursoBruto !== null) {
+        return responder(
+          {
+            ok: false,
+            error: "recurso debe ser null para visita"
+          },
+          400,
+          corsHeaders
+        );
+      }
+    } else if (!recurso) {
       return responder(
         {
           ok: false,
@@ -435,7 +436,7 @@ async function registrarAccesoEstudios(
       );
     }
 
-    await env.DB
+    const resultado = await env.DB
       .prepare(`
         INSERT INTO accesos_estudios (
           evento,
@@ -465,8 +466,30 @@ async function registrarAccesoEstudios(
       )
       .run();
 
-    return obtenerContadorEstudios(
-      env,
+    if (!resultado.success) {
+      throw new Error("D1 no confirmó el registro de Estudios");
+    }
+
+    const registrado = Number(resultado.meta?.changes ?? 0) > 0;
+
+    if (registrado) {
+      return responder(
+        {
+          ok: true,
+          registrado: true
+        },
+        201,
+        corsHeaders
+      );
+    }
+
+    return responder(
+      {
+        ok: true,
+        registrado: false,
+        duplicado: true
+      },
+      200,
       corsHeaders
     );
 
@@ -513,7 +536,7 @@ async function obtenerContadorEstudios(
         visitas: Number(contador?.visitas ?? 0),
         laminas: Number(contador?.laminas ?? 0),
         linkedin: Number(contador?.linkedin ?? 0),
-        updated_at: new Date().toISOString()
+        updated_at: contador?.updated_at ?? null
       },
       200,
       corsHeaders
