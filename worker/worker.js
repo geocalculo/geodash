@@ -83,6 +83,12 @@ const SITIOS_ANALYTICS = [
   "geonoxa"
 ];
 
+const EVENTOS_ESTUDIOS_VALIDOS = new Set([
+  "visita",
+  "lamina",
+  "linkedin"
+]);
+
 
 export default {
 
@@ -290,6 +296,35 @@ export default {
 
 
     // =========================================================
+    // ANALÍTICA INDEPENDIENTE DE ESTUDIOS
+    // =========================================================
+
+    if (
+      request.method === "POST" &&
+      url.pathname === "/api/estudios/visita"
+    ) {
+
+      return registrarAccesoEstudios(
+        request,
+        env,
+        corsHeaders
+      );
+    }
+
+
+    if (
+      request.method === "GET" &&
+      url.pathname === "/api/estudios/contador"
+    ) {
+
+      return obtenerContadorEstudios(
+        env,
+        corsHeaders
+      );
+    }
+
+
+    // =========================================================
     // RUTA NO ENCONTRADA
     // =========================================================
 
@@ -334,6 +369,172 @@ async function obtenerHealth(env, corsHeaders) {
     database ? 200 : 503,
     corsHeaders
   );
+}
+
+
+// =============================================================
+// ANALÍTICA INDEPENDIENTE DE ESTUDIOS
+// =============================================================
+
+async function registrarAccesoEstudios(
+  request,
+  env,
+  corsHeaders
+) {
+
+  try {
+
+    const datos = await request.json();
+    const evento = String(datos.evento || "")
+      .trim()
+      .toLowerCase();
+    const recurso = limpiarTexto(datos.recurso, 200);
+    const sessionId = limpiarTexto(datos.session_id, 100);
+
+    if (!EVENTOS_ESTUDIOS_VALIDOS.has(evento)) {
+      return responder(
+        {
+          ok: false,
+          error: "Evento no válido"
+        },
+        400,
+        corsHeaders
+      );
+    }
+
+    if (!sessionId) {
+      return responder(
+        {
+          ok: false,
+          error: "session_id no válido"
+        },
+        400,
+        corsHeaders
+      );
+    }
+
+    if (evento === "visita" && datos.recurso !== null) {
+      return responder(
+        {
+          ok: false,
+          error: "recurso debe ser null para visita"
+        },
+        400,
+        corsHeaders
+      );
+    }
+
+    if (evento !== "visita" && !recurso) {
+      return responder(
+        {
+          ok: false,
+          error: "recurso no válido"
+        },
+        400,
+        corsHeaders
+      );
+    }
+
+    await env.DB
+      .prepare(`
+        INSERT INTO accesos_estudios (
+          evento,
+          recurso,
+          session_id
+        )
+        SELECT ?, ?, ?
+        WHERE NOT EXISTS (
+          SELECT 1
+          FROM accesos_estudios
+          WHERE evento = ?
+            AND session_id = ?
+            AND (
+              ? = 'visita'
+              OR recurso = ?
+            )
+        )
+      `)
+      .bind(
+        evento,
+        evento === "visita" ? null : recurso,
+        sessionId,
+        evento,
+        sessionId,
+        evento,
+        recurso
+      )
+      .run();
+
+    return obtenerContadorEstudios(
+      env,
+      corsHeaders
+    );
+
+  } catch (error) {
+
+    console.error(
+      "Error registrando acceso de Estudios:",
+      error
+    );
+
+    return responder(
+      {
+        ok: false,
+        error: "No fue posible registrar el acceso de Estudios"
+      },
+      500,
+      corsHeaders
+    );
+  }
+}
+
+
+async function obtenerContadorEstudios(
+  env,
+  corsHeaders
+) {
+
+  try {
+
+    const contador = await env.DB
+      .prepare(`
+        SELECT
+          SUM(CASE WHEN evento = 'visita' THEN 1 ELSE 0 END) AS visitas,
+          SUM(CASE WHEN evento = 'lamina' THEN 1 ELSE 0 END) AS laminas,
+          SUM(CASE WHEN evento = 'linkedin' THEN 1 ELSE 0 END) AS linkedin,
+          MAX(fecha) AS updated_at
+        FROM accesos_estudios
+      `)
+      .first();
+
+    return responder(
+      {
+        ok: true,
+        visitas: Number(contador?.visitas ?? 0),
+        laminas: Number(contador?.laminas ?? 0),
+        linkedin: Number(contador?.linkedin ?? 0),
+        updated_at: new Date().toISOString()
+      },
+      200,
+      corsHeaders
+    );
+
+  } catch (error) {
+
+    console.error(
+      "Error obteniendo contador de Estudios:",
+      error
+    );
+
+    return responder(
+      {
+        ok: false,
+        error: "No fue posible obtener el contador de Estudios"
+      },
+      500,
+      corsHeaders
+    );
+  }
 }
 
 
